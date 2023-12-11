@@ -1,2 +1,11 @@
+<div align="center">
+  <img width="250" src="https://github.com/ChifiSource/ChifiSource.jl/blob/main/public/images/chifi.svg">
+</img>
+</div>
+
 ###### χφ
-eventually, this will be the chifi master server... Which will use and manage all of our deployed projects! We are still working on the software to get those projects out the door, though! **See you soon!**
+Welcome to the **chifi master server**. This is a master session built to accomplish two goals.
+- Provide a homepage explaining what **chifi** is, as well as more information on **chifi** projects.
+- Facilitate **chifi** account logins and settings for `OliveCreator` and other **chifi** apps.
+- Provide a web-based management solution for managing **chifi** the servers of chifi apps.
+- Provide a unified, centralized data source for all **chifi** websites.
