@@ -1,5 +1,8 @@
+using Pkg; Pkg.activate(".")
 using Toolips
+using Revise
+using ChifiSource
+
 IP = "127.0.0.1"
 PORT = 8000
-extensions = Dict(:logger => Logger(), :public => Files("public"))
-include("src/ChifiSource.jl")
+ChifiSourceServer = ChifiSource.start(IP, PORT)
