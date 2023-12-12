@@ -4,7 +4,7 @@
 </div>
 
 ###### χφ
-Welcome to the **chifi master server**. This is a master session built to accomplish two goals.
+Welcome to the **chifi master server**. This server hopes to accomplish the following:
 - Provide a homepage explaining what **chifi** is, as well as more information on **chifi** projects.
 - Facilitate **chifi** account logins and settings for `OliveCreator` and other **chifi** apps.
 - Provide a web-based management solution for managing **chifi** the servers of chifi apps.
