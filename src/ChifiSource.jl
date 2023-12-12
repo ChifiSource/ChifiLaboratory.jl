@@ -1,67 +1,62 @@
 module ChifiSource
 using Toolips
 using ToolipsSession
+using ToolipsMarkdown
 
 mutable struct Ecosystem{T <: Any}
-    Ecosystem(T::String) = new{T}()
+    name::String
+    Ecosystem(T::String) = new{Symbol(T)}(T)
 end
 
-color(eco::Ecosystem{:toolips}) = "#79B7CE"
+ecocolor(eco::Ecosystem{:toolips}) = "#79B7CE"
 
-color(eco::Ecosystem{:olive}) = "#FE86C7"
+ecocolor(eco::Ecosystem{:olive}) = "#FE86C7"
 
-color(eco::Ecosystem{:gattino}) = "#79B7CE"
+ecocolor(eco::Ecosystem{:gattino}) = "#C178B5"
 
-color(eco::Ecosystem{:algia}) = "#79B7CE"
+ecocolor(eco::Ecosystem{:algia}) = "#F9C800"
 
-color(eco::Ecosystem{:tumble}) = "#79B7CE"
+ecocolor(eco::Ecosystem{:tumble}) = "#E24E40"
 
-function welcome_page(c::Connection, eco::Ecosystem{:toolips})
+ecocolor(eco::Ecosystem{:chifi}) = "#232b2b"
 
+function welcome_page(c::Connection, eco::Ecosystem{<:Any})
+    econame = eco.name
+    rawmd = read("text/main/$econame/$econame.md", String) 
+    tmd("$econame-main", rawmd)
 end
 
-function welcome_page(c::Connection, eco::Ecosystem{:olive})
-
-end
-
-function welcome_page(c::Connection, eco::Ecosystem{:gattino})
-
-end
-
-function welcome_page(c::Connection, eco::Ecosystem{:algia})
-
-end
-
-function welcome_page(c::Connection, eco::Ecosystem{:tumble})
-
-end
-
-function logomenu(c::Connection)
+function logomenu(c::Connection, width::Int64 = 350)
     logobox = div("logobox", align = "center")
     topbox = div("topbox", align = "center")
     barbox = div("barbox")
     style!(logobox, "transition" => 2seconds)
     push!(logobox, topbox, barbox)
-    style!(barbox, "background" => "transparent", "width" => 350px, "transition" => 1seconds)
-    style!(topbox, "background-color" => "black", "width" => 350px, "height" => 120px, "border-top-left-radius" => 5px, "border-top-right-radius" => 5px, 
+    style!(barbox, "background" => "transparent", "width" => width * px, "transition" => 1seconds)
+    style!(topbox, "background-color" => "black", "width" => width * px, "height" => 120px, "border-top-left-radius" => 5px, "border-top-right-radius" => 5px, 
     "transition" => 1seconds)
     chitext = a("ex", text = "chifi")
     style!(chitext, "font-weight" => "bold", "font-size" => 50pt, "color" => "white")
     push!(topbox, chitext)
-    colors = Dict("toolips" => "#79B7CE", "olive" => "#FE86C7", "gattino" => "#C178B5", "algia" => "#F9C800", "tumble" => "#E24E40")
+    ecos::Vector{Ecosystem{<:Any}} = [Ecosystem(s) for s in ("tumble", "gattino", "algia", "olive", "toolips", "chifi")]
+    ecow::Number = 100 / length(ecos)
     barbox[:children] = Vector{Servable}([begin
-        comp = div("$econame", align = "center", class = "menublock")
-        style!(comp, "background-color" => colors[econame], "width" => 20percent, "height" => 40px, 
+        name::String = eco.name
+        color::String = ecocolor(eco)
+        comp::Component{:div} = div("$name", align = "center", class = "menublock")
+        style!(comp, "background-color" => color, "width" => "$ecow%", "height" => 40px, 
         "display" => "inline-block", "transition" => 1seconds)
-        innerimg = img("$(econame)icon", src = "/images/icons/$econame.png", width = "40", class = "menuicon")
+        innerimg = img("$(name)icon", src = "/images/icons/$name.png", width = "40", class = "menuicon")
         push!(comp, innerimg)
         on(c, comp, "click") do cm::ComponentModifier
-            style!(cm, topbox, "background-color" => colors[econame])
-            set_text!(cm, chitext, econame)
-            style!(cm, "mainbod", "background-color" => colors[econame])
+            style!(cm, topbox, "background-color" => color)
+            set_text!(cm, chitext, name)
+            style!(cm, "mainbod", "background-color" => color)
+            page_content = welcome_page(c, eco)
+            append!(cm, "mainbod", page_content)
         end
         comp
-    end for econame in ("toolips", "olive", "gattino", "algia", "tumble")])
+    end for eco in ecos])
     logobox
 end
 

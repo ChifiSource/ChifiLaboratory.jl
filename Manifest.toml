@@ -2,7 +2,7 @@
 
 julia_version = "1.9.2"
 manifest_format = "2.0"
-project_hash = "559f074a6970b426526050b5271bd370aed67efa"
+project_hash = "8524bf821a3383b75977890fc5b8a78542abe189"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -240,6 +240,12 @@ repo-rev = "main"
 repo-url = "https://github.com/ChifiSource/Toolips.jl.git"
 uuid = "a47e2ad8-fcf7-417c-9746-32b9bdf220bd"
 version = "0.2.5"
+
+[[deps.ToolipsMarkdown]]
+deps = ["Markdown", "Toolips"]
+git-tree-sha1 = "ae277f699ad0abb4743ee9bc7deeb89b554de867"
+uuid = "33f7ff50-f2f2-41f0-8a96-482dce5c1514"
+version = "0.1.4"
 
 [[deps.ToolipsSession]]
 deps = ["Dates", "ParseNotEval", "Random", "Toolips"]
