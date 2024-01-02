@@ -2,73 +2,117 @@ module ChifiSource
 using Toolips
 using ToolipsSession
 using ToolipsMarkdown
+using ToolipsSVG
 
-mutable struct Ecosystem{T <: Any}
+temp_udata = Dict("emma" => Dict(
+    "purl" => "/", "quickstart" => ["creator", "lab0builder"], 
+"fi" => 1))
+
+mutable struct User
+    username::String
+    picture_url::String
+    quickstart::Vector{String}
+    fi::Int64
+end
+
+mutable struct Laboratory <: Toolips.Servable
     name::String
-    Ecosystem(T::String) = new{Symbol(T)}(T)
+    color::String
+    plates::Matrix
+    user::User
+    level::Int64
 end
 
-ecocolor(eco::Ecosystem{:toolips}) = "#79B7CE"
-
-ecocolor(eco::Ecosystem{:olive}) = "#FE86C7"
-
-ecocolor(eco::Ecosystem{:gattino}) = "#C178B5"
-
-ecocolor(eco::Ecosystem{:algia}) = "#F9C800"
-
-ecocolor(eco::Ecosystem{:tumble}) = "#E24E40"
-
-ecocolor(eco::Ecosystem{:chifi}) = "#232b2b"
-
-function welcome_page(c::Connection, eco::Ecosystem{<:Any})
-    econame = eco.name
-    rawmd = read("text/main/$econame/$econame.md", String) 
-    tmd("$econame-main", rawmd)
+mutable struct Laboratories <: Toolips.ServerExtension
+    type::Symbol
+    active::Vector{Laboratory}
+    users::Vector{User}
+    keys::Dict{String, String}
+    Laboratories() = new(:connection, Vector{Laboratory}(), 
+    users::Vector{User}, keys::Dict{String, String})
 end
 
-function logomenu(c::Connection, width::Int64 = 350)
-    logobox = div("logobox", align = "center")
-    topbox = div("topbox", align = "center")
-    barbox = div("barbox")
-    style!(logobox, "transition" => 2seconds)
-    push!(logobox, topbox, barbox)
-    style!(barbox, "background" => "transparent", "width" => width * px, "transition" => 1seconds)
-    style!(topbox, "background-color" => "black", "width" => width * px, "height" => 120px, "border-top-left-radius" => 5px, "border-top-right-radius" => 5px, 
-    "transition" => 1seconds)
-    chitext = a("ex", text = "chifi")
-    style!(chitext, "font-weight" => "bold", "font-size" => 50pt, "color" => "white")
-    push!(topbox, chitext)
-    ecos::Vector{Ecosystem{<:Any}} = [Ecosystem(s) for s in ("tumble", "gattino", "algia", "olive", "toolips", "chifi")]
-    ecow::Number = 100 / length(ecos)
-    barbox[:children] = Vector{Servable}([begin
-        name::String = eco.name
-        color::String = ecocolor(eco)
-        comp::Component{:div} = div("$name", align = "center", class = "menublock")
-        style!(comp, "background-color" => color, "width" => "$ecow%", "height" => 40px, 
-        "display" => "inline-block", "transition" => 1seconds)
-        innerimg = img("$(name)icon", src = "/images/icons/$name.png", width = "40", class = "menuicon")
-        push!(comp, innerimg)
-        on(c, comp, "click") do cm::ComponentModifier
-            style!(cm, topbox, "background-color" => color)
-            set_text!(cm, chitext, name)
-            style!(cm, "mainbod", "background-color" => color)
-            page_content = welcome_page(c, eco)
-            append!(cm, "mainbod", page_content)
-        end
-        comp
-    end for eco in ecos])
-    logobox
+struct LabModule{T <: Any}
 end
 
-function home(c::Connection)
-    menblocks = Style("div.menublock")
-    ico = Style("img.menuicon")
-    menblocks:"hover":["transform" => "matrix(1, 0, 0, 1, 0, 3)"]
-    ico:"hover":["transform" => "scale(1.1)"]
-    write!(c, menblocks, ico)
-    mainbod = body("mainbod")
-    style!(mainbod, "margin-top" => 10percent, "overflow" => "hidden", "transition" => 1seconds)
-    logom = logomenu(c)
+module_color(eco::LabModule{:lab0builder}) = "#79B7CE"
+
+module_color(eco::LabModule{:fi}) = "#C178B5"
+
+module_color(eco::LabModule{:module0deck}) = "#79B7CE"
+
+module_color(eco::LabModule{:share0my0repl}) = "#79B7CE"
+
+module_color(eco::LabModule{:accessories}) = "#79B7CE"
+
+module_color(eco::LabModule{:creator}) = "#FE86C7"
+
+module_color(eco::LabModule{:doc}) = "#FE86C7"
+
+load_module!(s::String) = load_module(LabModule{Symbol(s)}())
+
+function load_module!(lm::LabModule{:fi})
+
+end
+
+function load_module!(lm::LabModule{:lab0builder})
+    
+end
+
+function load_module!(lm::LabModule{:creator})
+    
+end
+
+
+mutable struct UserConnection <: Toolips.AbstractConnection
+    hostname::String
+    routes::Vector{Toolips.AbstractRoute}
+    extensions::Vector{Toolips.ServerExtension}
+    user::User
+    function UserConnection(c::Connection, name::String)
+        usr = User(tempudata[name], tempudata["purl"], 
+        tmp_udata["quickstart"], tmpudata["fi"])
+        new(c.hostname, c.routes, c.extensions, usr)
+    end
+end
+
+#==
+UI
+==#
+function chilogo()
+    chiwindow = svg("chi", width = 250, height = 135, align = "center")
+    chitxt = ToolipsSVG.text("chitxt", x = 70, y = 70, text = "chifi")
+    style!(chitxt, "font-weight" => "extra-bold", "fill" => "white", "stroke-width" => 2px, 
+    "stroke" => "black", "font-size" => 70pt)
+    push!(chiwindow, chitxt)
+    style!(chiwindow, "margin-top" => 10percent)
+ #   style!(chiwindow, "opacity" => 0percent)
+    chiwindow
+end
+
+function build_quickstart(c::Connection)
+    quickstart_main = circle("labcirc", cx = 93, cy = 105, r = 20)
+    style!(quickstart_main, "fill" => "#79B7CE")
+    doc = circle("docmodule", cx = 140, cy = 105, r = 20)
+    style!(doc, "fill" => module_color(LabModule{:doc}()))
+    [quickstart_main, doc]
+end
+
+function build_quickstart(c::UserConnection)
+
+end
+
+
+function quickstart_splash(c::Connection)
+    mainbody = body("chimain", align = "center")
+    splash_chitext::Component{:svg} = chilogo()
+    quicklaunch = build_quickstart(c)
+    splash_chitext[:children] = vcat(splash_chitext[:children], quicklaunch)
+    push!(mainbody, splash_chitext, br(), chi_footer())
+    mainbody::Component{:body}
+end
+
+function chi_footer()
     footdiv = div("chifoot")
     style!(footdiv, "position" => "absolute", "background" => "transparent", "top" => 95percent, "left" => 82percent, 
     "opacity" => 50percent, "display" => "flex")
@@ -76,10 +120,34 @@ function home(c::Connection)
     push!(footdiv, footlicense)
     [push!(footdiv, img("lice", src = src, width = 20)) for src in ("/images/icons/cc.png", "/images/icons/by.png")]
     srclnk = a("chisrc", href = "https://github.com/ChifiSource/ChifiSource.jl",text = " | source")
-    style!(srclnk, "color" => "green")
-    push!(footdiv, srclnk)
-    push!(mainbod, logom, footdiv)
-    write!(c, mainbod)
+end
+
+function login_container()
+
+end
+
+function build_lab(c::Connection)
+
+end
+
+function save_lab(s::String, lab::Laboratory)
+
+end
+
+function home(c::Connection)
+    args = getargs(c)
+    if ~(:key in keys(args))
+        initbody::Component{:body} = quickstart_splash(c)
+    else
+        try
+            name = c[:Laboratories][args[:key]]
+            uc = UserConnection(c, name)
+            initbody = quickstart_splash(uc)
+        catch
+            initbody = quickstart_splash(c)
+        end
+    end
+    write!(c, initbody)
 end
 
 fourofour = route("404") do c
