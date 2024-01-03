@@ -3,7 +3,7 @@ using Toolips
 using ToolipsSession
 using ToolipsMarkdown
 using ToolipsSVG
-
+using ToolipsDefaults: textdiv
 temp_udata = Dict("emma" => Dict(
     "purl" => "/", "quickstart" => ["creator", "lab0builder"], 
 "fi" => 1))
@@ -82,6 +82,17 @@ UI
 
 function make_styles()
     stylebody = Component("chisheet", "sheet")
+    txtboxes = Style("div.txtboxes", "border-radius" => 2px, 
+    "background-color" => "#000000", "color" => "white", "font-size" => 17pt, "font-weight" => "semi-bold", "outline" => "transparent", 
+    "overflow" => "hidden", "padding" => 4px, "transition" => 500ms)
+    txtboxes:"focus":["border-bottom" => "2px solid #FA9EBC"]
+    bttns = Style("button", "background-color" => "#39293d", "color" => "#9f93a1", 
+    "font-size" => 14pt, "font-weight" => "bold", "padding" => 4px, "pointer" => "cursor", 
+    "transition" => 400ms)
+    bttns:"hover":["border-bottom" => "4px solid #FA9EBC"]
+    bttns:"focus":["background-color" => "#FA9EBC"]
+    paragraphs = Style("p", "font-size" => 15pt, "color" => "white")
+    push!(stylebody, txtboxes, bttns, paragraphs)
     stylebody
 end
 
@@ -121,6 +132,10 @@ function build_quickstart(c::Connection)
     doc = circle("docmodule", cx = 100, cy = 175, r = 20)
     style!(doc, "fill" => module_color(LabModule{:doc}()), "transition" => 2seconds, "transform" => "translateX(1500px)")
     [quickstart_main, doc]
+end
+
+function build_quickstart(m::LabModule)
+
 end
 
 function build_quickstart(c::UserConnection)
@@ -179,53 +194,82 @@ function lab_in(c::Connection, cm::ComponentModifier, labcirc::Component{:circle
         style!(cm, lab_text, "opacity" => 100percent)
         style!(cm, doccirc, "opacity" => 100percent, 
         "transition" => 1seconds)
-        setting = true
-        labspin(c, cm, doccirc, setting)
-        append!(cm, "chimain", login_wind(c, setting))
+        labspin(c, cm, doccirc)
+        append!(cm, "chimain", login_wind(c, cm))
         next!(c, lab_text, cm, ["none"]) do cm2::ComponentModifier
-            style!(cm2, "login-window", "height" => 30percent, "opacity" => 100percent)
+            style!(cm2, "login-window", "height" => 45percent, "opacity" => 93percent)
         end
     end
 end
 
-function login_wind(c::Toolips.AbstractConnection, setting::Bool)
+function main_spawn(c::UserConnection, cm::ComponentModifier, 
+    labm::Component{:circle}, doc::Component{:circle})
+
+end
+
+function load_from_name(c::Connection, cm::ComponentModifier, name::String)
+
+end
+
+function load_from_key(c::Connection, cm::ComponentModifier, key::String)
+
+end
+
+function login_wind(c::Toolips.AbstractConnection, cm::ComponentModifier)
     outerwind = div("login-window", align = "left")
     loginh = h("loginh", 2, text = "username")
+    loginbox = textdiv("loginbox", text = "")
+    loginbox[:class] = "txtboxes"
+    pwdbox = textdiv("pwdbox", text = "")
+    pwdbox[:class] = "txtboxes"
+    keybox = textdiv("keybox", text = "")
+    on(c, keybox, "paste", ["keybox"]) do cm::ComponentModifier
+        keytext = cm["keybox"]["text"]
+        cm["docmodule"] = "ontransitionend" => "nothing"
+        load_from_key
+    end
+    bind!(c, cm, keybox, "Enter") do cm::ComponentModifier
+        alert!(cm, "key")
+    end
+    keybox[:class] = "txtboxes"
+    style!(keybox, "color" => "#331e38")
     style!(loginh, "font-size" => 17pt, "color" => "white")
     pwdh = h("pwdh", 2, text = "password")
     style!(pwdh, "font-size" => 17pt, "color" => "white")
     keyh = h("keyh", 2, text = "key")
-    style!(keyh, "font-size" => 17pt, "color" => "#79437d")
-    style!(outerwind, "width" => 12percent, "height" => 0percent, "margin-left" => 44percent, 
-    "opacity" => 0percent, "background-color" => "#1c1c1b",
-    "transition" => 700ms, "padding" => 4px, "border-radius" => 2px, "padding" => 6px)
+    style!(keyh, "font-size" => 17pt, "color" => "#d696d1")
+    style!(outerwind, "width" => 20percent, "height" => 0percent, "top" => 32percent,
+    "opacity" => 0percent, "background-color" => "#28282B", "position" => "absolute", "left" => 39percent,
+    "transition" => 2seconds, "border-radius" => 2px, "padding" => 20px)
     requestb = button("requestb", text = "request key")
     style!(requestb, "width" => 50percent)
     helpb = button("helpb", text = "?")
     style!(helpb, "width" => 50percent)
     submb = button("submitb", text = "submit")
     style!(submb, "width" => 100percent)
-    push!(outerwind, loginh, pwdh, Component("", "hr"), keyh,  Component("", "hr"), helpb, requestb,
+    rule = Component("", "hr")
+    style!(rule, "margin-bottom" => 12px)
+    ortxt = p("ortxt", text = "or", align = "center")
+    style!(ortxt, "font-weight" => "bold")
+    style!(ortxt, "margin-top" => 8px, "margin-bottom" => 0px)
+    push!(outerwind, loginh, loginbox, pwdh, pwdbox, ortxt, rule, keyh, keybox, rule, helpb, requestb,
     br(), submb)
     outerwind
 end
 
-function labspin(c::Connection, cm::ComponentModifier, docc::Component{:circle}, setting::Bool)
-    rot = rand(200:280)
+function labspin(c::Connection, cm::ComponentModifier, docc::Component{:circle})
+    rot = rand(220:252)
     color = theme_colors[rand(1:5)]
     arclen = 2 * π * (50 - 10)
-    perc = rand(1:100)
+    perc = rand(18:86)
     strk = rand(8:20)
     arc = Int64(round(arclen * ((100 - perc)/100)))
     darray = rand(150:300)
     style!(cm, docc, "transform" => "rotate($(rot)deg)", "stroke" => color, 
     "stroke-dashoffset" => "$(arc)px", "stroke-dasharray" => "$(darray)px", 
     "stroke-width" => "$(strk)px")
-    if setting == false
-        return
-    end
     next!(c, docc, cm) do cm::ComponentModifier
-        labspin(c, cm, docc, setting)
+        labspin(c, cm, docc)
     end
 end
 
@@ -303,21 +347,28 @@ function save_lab(s::String, lab::Laboratory)
 
 end
 
+function keysearch(c::Connection)
+    nothing
+end
+
 function home(c::Connection)
     write!(c, make_styles())
     args = getargs(c)
+    key = ""
     if ~(:key in keys(args))
-        initbody::Component{:body} = quickstart_splash(c)
-    else
-        try
-            name = c[:Laboratories][args[:key]]
-            uc = UserConnection(c, name)
-            initbody = quickstart_splash(uc)
-        catch
-            initbody = quickstart_splash(c)
+        key = keysearch(c)
+        if isnothing(key)
+            initbody::Component{:body} = quickstart_splash(c)
+            write!(c, initbody)
+            return
         end
+    else
+        key = args[:key]
     end
-    write!(c, initbody)
+    name = c[:Laboratories][args[:key]]
+    uc = UserConnection(c, name)
+    initbody = quickstart_splash(uc)
+    initbody = quickstart_splash(c)
 end
 
 fourofour = route("404") do c
