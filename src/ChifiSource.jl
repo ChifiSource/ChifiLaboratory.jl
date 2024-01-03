@@ -88,11 +88,12 @@ function make_styles()
     txtboxes:"focus":["border-bottom" => "2px solid #FA9EBC"]
     bttns = Style("button", "background-color" => "#39293d", "color" => "#9f93a1", 
     "font-size" => 14pt, "font-weight" => "bold", "padding" => 4px, "pointer" => "cursor", 
-    "transition" => 400ms)
+    "transition" => 400ms, "outline" => "transparent")
     bttns:"hover":["border-bottom" => "4px solid #FA9EBC"]
     bttns:"focus":["background-color" => "#FA9EBC"]
     paragraphs = Style("p", "font-size" => 15pt, "color" => "white")
-    push!(stylebody, txtboxes, bttns, paragraphs)
+    maintitle = title("met-title", text = "quickstart | ")
+    push!(stylebody, txtboxes, bttns, paragraphs, maintitle)
     stylebody
 end
 
@@ -162,8 +163,12 @@ function ql_load!(f::Function, c::Toolips.AbstractConnection, cm::ComponentModif
     n += 1
     if n == 6
         f(cm)
+        style!(cm, "qscounter", "transition" => 0seconds)
+        cm["qscounter"] = "ontransitionend" => "nothing"
+        set_text!(cm, "met-title", "laboratory")
         return
     end
+    set_text!(cm, "met-title", "quickstart | $(6 - n)")
     set_text!(cm, "qscounter", string(n))
     style!(cm, "qscounter", "color" => theme_colors[n])
     next!(c, ql[:children]["qscounter"], cm, ["none"]) do cm2::ComponentModifier
@@ -195,9 +200,11 @@ function lab_in(c::Connection, cm::ComponentModifier, labcirc::Component{:circle
         style!(cm, doccirc, "opacity" => 100percent, 
         "transition" => 1seconds)
         labspin(c, cm, doccirc)
-        append!(cm, "chimain", login_wind(c, cm))
+        log = login_wind(c, cm)
+        append!(cm, "chimain", log)
         next!(c, lab_text, cm, ["none"]) do cm2::ComponentModifier
             style!(cm2, "login-window", "height" => 45percent, "opacity" => 93percent)
+            focus!(cm2, "loginbox")
         end
     end
 end
@@ -215,21 +222,31 @@ function load_from_key(c::Connection, cm::ComponentModifier, key::String)
 
 end
 
+standard_txtbind!(c::Toolips.AbstractConnection, cm::ComponentModifier, comp::Component{<:Any}, 
+nextcomp::Component{<:Any}, lastcomp::Any = nothing; only::Vector{String} = Vector{String}()) = begin
+    km = ToolipsSession.KeyMap()
+    bind!(km, "Enter", prevent_default = true) do cm::ComponentModifier
+        focus!(cm, nextcomp)
+    end
+    if ~(isnothing(lastcomp))
+        bind!(km, "ArrowUp", prevent_default = true) do cm::ComponentModifier
+            focus!(cm, lastcomp)
+        end
+    end
+    bind!(c, cm, comp, km, only)
+end
+
 function login_wind(c::Toolips.AbstractConnection, cm::ComponentModifier)
     outerwind = div("login-window", align = "left")
     loginh = h("loginh", 2, text = "username")
     loginbox = textdiv("loginbox", text = "")
     loginbox[:class] = "txtboxes"
     pwdbox = textdiv("pwdbox", text = "")
+    standard_txtbind!(c, cm, loginbox, pwdbox)
     pwdbox[:class] = "txtboxes"
     keybox = textdiv("keybox", text = "")
-    on(c, keybox, "paste", ["keybox"]) do cm::ComponentModifier
-        keytext = cm["keybox"]["text"]
-        cm["docmodule"] = "ontransitionend" => "nothing"
-        load_from_key
-    end
-    bind!(c, cm, keybox, "Enter") do cm::ComponentModifier
-        alert!(cm, "key")
+    on(c, keybox, "paste", ["rawkeybox"]) do cm::ComponentModifier
+        focus!(cm, submb)
     end
     keybox[:class] = "txtboxes"
     style!(keybox, "color" => "#331e38")
@@ -240,13 +257,26 @@ function login_wind(c::Toolips.AbstractConnection, cm::ComponentModifier)
     style!(keyh, "font-size" => 17pt, "color" => "#d696d1")
     style!(outerwind, "width" => 20percent, "height" => 0percent, "top" => 32percent,
     "opacity" => 0percent, "background-color" => "#28282B", "position" => "absolute", "left" => 39percent,
-    "transition" => 2seconds, "border-radius" => 2px, "padding" => 20px)
+    "transition" => 750ms, "border-radius" => 2px, "padding" => 20px)
     requestb = button("requestb", text = "request key")
     style!(requestb, "width" => 50percent)
     helpb = button("helpb", text = "?")
     style!(helpb, "width" => 50percent)
     submb = button("submitb", text = "submit")
+    standard_txtbind!(c, cm, pwdbox, submb, loginbox, only = ["loginbox", "pwdbox"])
+    standard_txtbind!(c, cm, keybox, submb, pwdbox, only = ["keybox"])
     style!(submb, "width" => 100percent)
+    on(c, submb, "focus", ["none"]) do cm::ComponentModifier
+        [println(c.name) for c in cm.rootc]
+        rawname = cm["loginbox"]["text"]
+        if length(rawname) < 3
+            key = cm["keybox"]["text"]
+            alert!(cm, key)
+            return
+        end
+        alert!(cm, rawname)
+        blur!(cm, sumbmb)
+    end
     rule = Component("", "hr")
     style!(rule, "margin-bottom" => 12px)
     ortxt = p("ortxt", text = "or", align = "center")
@@ -258,11 +288,11 @@ function login_wind(c::Toolips.AbstractConnection, cm::ComponentModifier)
 end
 
 function labspin(c::Connection, cm::ComponentModifier, docc::Component{:circle})
-    rot = rand(220:252)
+    rot = rand(230:252)
     color = theme_colors[rand(1:5)]
     arclen = 2 * π * (50 - 10)
-    perc = rand(18:86)
-    strk = rand(8:20)
+    perc = rand(15:65)
+    strk = rand(8:28)
     arc = Int64(round(arclen * ((100 - perc)/100)))
     darray = rand(150:300)
     style!(cm, docc, "transform" => "rotate($(rot)deg)", "stroke" => color, 
