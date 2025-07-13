@@ -1,9 +1,8 @@
 module ChifiSource
 using Toolips
+using Toolips.Components
 using ToolipsSession
-using ToolipsMarkdown
 using ToolipsSVG
-using ToolipsDefaults: textdiv
 temp_udata = Dict("emma" => Dict(
     "purl" => "/", "quickstart" => ["creator", "lab0builder"], 
 "fi" => 1))
@@ -15,7 +14,7 @@ mutable struct User
     fi::Int64
 end
 
-mutable struct Laboratory <: Toolips.Servable
+mutable struct Laboratory
     name::String
     color::String
     plates::Matrix
@@ -23,7 +22,7 @@ mutable struct Laboratory <: Toolips.Servable
     level::Int64
 end
 
-mutable struct Laboratories <: Toolips.ServerExtension
+mutable struct Laboratories <: Toolips.AbstractExtension
     type::Symbol
     active::Vector{Laboratory}
     users::Vector{User}
@@ -67,7 +66,7 @@ end
 mutable struct UserConnection <: Toolips.AbstractConnection
     hostname::String
     routes::Vector{Toolips.AbstractRoute}
-    extensions::Vector{Toolips.ServerExtension}
+    extensions::Vector{Toolips.AbstractExtension}
     user::User
     function UserConnection(c::Connection, name::String)
         usr = User(tempudata[name], tempudata["purl"], 
@@ -81,7 +80,7 @@ UI
 ==#
 
 function make_styles()
-    stylebody = Component("chisheet", "sheet")
+    stylebody = Component{:sheet}("chisheet")
     txtboxes = Style("div.txtboxes", "border-radius" => 2px, 
     "background-color" => "#000000", "color" => "white", "font-size" => 17pt, "font-weight" => "semi-bold", "outline" => "transparent", 
     "overflow" => "hidden", "padding" => 4px, "transition" => 500ms)
@@ -99,7 +98,7 @@ end
 
 function chilogo()
     chiwindow = svg("chi", width = 100percent, height = 210, align = "center")
-    chitxt = Component("chimin", "image")
+    chitxt = Component{:image}("chimin")
     style!(chitxt, "transition" => 500ms)
     chitxt[:href] = "/images/chimin.png"
     chitxt[:x], chitxt[:y] = 1, 1
@@ -171,7 +170,7 @@ function ql_load!(f::Function, c::Toolips.AbstractConnection, cm::ComponentModif
     set_text!(cm, "met-title", "quickstart | $(6 - n)")
     set_text!(cm, "qscounter", string(n))
     style!(cm, "qscounter", "color" => theme_colors[n])
-    next!(c, ql[:children]["qscounter"], cm, ["none"]) do cm2::ComponentModifier
+    next!(c, ql[:children]["qscounter"], cm) do cm2::ComponentModifier
         ql_load!(f, c, cm2, ql, n)
     end
 end
@@ -195,14 +194,14 @@ function lab_in(c::Connection, cm::ComponentModifier, labcirc::Component{:circle
         "stroke-width" => 0px, "stroke" => "lightblue", "transition" => 2seconds, 
         "z-index" => "20", 
         "stroke-dasharray" => 251px, "stroke-dashoffset" => "$(arc)px")
-    next!(c, labcirc, cm, ["none"]) do cm::ComponentModifier
+    next!(c, labcirc, cm) do cm::ComponentModifier
         style!(cm, lab_text, "opacity" => 100percent)
         style!(cm, doccirc, "opacity" => 100percent, 
         "transition" => 1seconds)
         labspin(c, cm, doccirc)
         log = login_wind(c, cm)
         append!(cm, "chimain", log)
-        next!(c, lab_text, cm, ["none"]) do cm2::ComponentModifier
+        next!(c, lab_text, cm) do cm2::ComponentModifier
             style!(cm2, "login-window", "height" => 45percent, "opacity" => 93percent)
             focus!(cm2, "loginbox")
         end
@@ -266,7 +265,7 @@ function login_wind(c::Toolips.AbstractConnection, cm::ComponentModifier)
     standard_txtbind!(c, cm, pwdbox, submb, loginbox, only = ["loginbox", "pwdbox"])
     standard_txtbind!(c, cm, keybox, submb, pwdbox, only = ["keybox"])
     style!(submb, "width" => 100percent)
-    on(c, submb, "focus", ["none"]) do cm::ComponentModifier
+    on(c, submb, "focus") do cm::ComponentModifier
         [println(c.name) for c in cm.rootc]
         rawname = cm["loginbox"]["text"]
         if length(rawname) < 3
@@ -277,7 +276,7 @@ function login_wind(c::Toolips.AbstractConnection, cm::ComponentModifier)
         alert!(cm, rawname)
         blur!(cm, sumbmb)
     end
-    rule = Component("", "hr")
+    rule = Component{:hr}()
     style!(rule, "margin-bottom" => 12px)
     ortxt = p("ortxt", text = "or", align = "center")
     style!(ortxt, "font-weight" => "bold")
@@ -312,17 +311,17 @@ function quickstart_splash(c::Connection)
     splash_chitext[:children] = vcat(splash_chitext[:children], quicklaunch)
     linesb = lines_bg()
     push!(mainbody, linesb, splash_chitext, br(), chi_footer())
-    on(c, mainbody, "load", ["none"]) do cm::ComponentModifier
+    on(c, mainbody, "load") do cm::ComponentModifier
         style!(cm, "chimain", "opacity" => 100percent)
         style!(cm, splash_chitext, "opacity" => 100percent, "transform" => "translateY(0%)")
         ql = quickstart_loader()
         append!(cm, "chimain", ql)
-        next!(c, splash_chitext, cm, ["none"]) do cm1::ComponentModifier
+        next!(c, cm, splash_chitext) do cm1::ComponentModifier
             style!(cm1, "linesbg", "transform" => "translateX(-8000px)")
             style!(cm1, "qsloader", "opacity" => 100percent)
             [style!(cm1, launch, "transform" => "translateX(0%)") for launch in quicklaunch]
             responded = false
-            next!(c, ql, cm1, ["none"]) do cm2::ComponentModifier
+            next!(c, cm1, ql) do cm2::ComponentModifier
                 if responded
                     return
                 end
@@ -339,7 +338,7 @@ function quickstart_splash(c::Connection)
                     remove!(cm, "loadpre")
                     remove!(cm, "enda")
                     set_text!(cm, "qscounter", "loading laboratory")
-                    next!(c, quicklaunch[1], cm, ["none"]) do cm2::ComponentModifier
+                    next!(c, cm, quicklaunch[1]) do cm2::ComponentModifier
                         style!(cm2, "qscounter", "opacity" => 0percent)
                         remove!(cm2, "chimin")
                         lab_in(c, cm2, quicklaunch[1], quicklaunch[2])
@@ -383,7 +382,7 @@ end
 
 function home(c::Connection)
     write!(c, make_styles())
-    args = getargs(c)
+    args = get_args(c)
     key = ""
     if ~(:key in keys(args))
         key = keysearch(c)
@@ -404,17 +403,20 @@ end
 fourofour = route("404") do c
     write!(c, p("404message", text = "404, not found!"))
 end
-
-routes = [route("/", home), fourofour]
-extensions = Vector{ServerExtension}([Logger(), Files(), Session(), ])
+home_r = route(home, "/")
 """
 start(IP::String, PORT::Integer, ) -> ::ToolipsServer
 --------------------
 The start function starts the WebServer.
 """
 function start(IP::String = "127.0.0.1", PORT::Integer = 8000)
-     ws = WebServer(IP, PORT, routes = routes, extensions = extensions)
-     ws.start(); ws
+     start!(ChifiSource, IP:PORT)
 end
+logg = Toolips.Logger()
+
+SES = Session()
+files = mount("/" => "public")
+
+export files, home_r, fourofour, logg, SES
 end # - module
         
