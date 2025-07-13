@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="800" src="https://github.com/ChifiSource/image_dump/blob/main/laboratory/chifilab.png">
+  <img width="325" src="https://github.com/ChifiSource/image_dump/blob/main/laboratory/chifilab.png">
 </img>
 </div>
 
