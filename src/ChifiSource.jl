@@ -3,9 +3,7 @@ using Toolips
 using Toolips.Components
 using ToolipsSession
 using ToolipsSVG
-temp_udata = Dict("emma" => Dict(
-    "purl" => "/", "quickstart" => ["creator", "lab0builder"], 
-"fi" => 1))
+using ToolipsORM
 
 mutable struct User
     username::String
@@ -22,63 +20,6 @@ mutable struct Laboratory
     level::Int64
 end
 
-mutable struct Laboratories <: Toolips.AbstractExtension
-    type::Symbol
-    active::Vector{Laboratory}
-    users::Vector{User}
-    keys::Dict{String, String}
-    Laboratories() = new(:connection, Vector{Laboratory}(), 
-    users::Vector{User}, keys::Dict{String, String})
-end
-
-struct LabModule{T <: Any}
-end
-
-module_color(eco::LabModule{:lab0builder}) = "#79B7CE"
-
-module_color(eco::LabModule{:fi}) = "#C178B5"
-
-module_color(eco::LabModule{:module0deck}) = "#79B7CE"
-
-module_color(eco::LabModule{:share0my0repl}) = "#79B7CE"
-
-module_color(eco::LabModule{:accessories}) = "#79B7CE"
-
-module_color(eco::LabModule{:creator}) = "#FE86C7"
-
-module_color(eco::LabModule{:doc}) = "#444444"
-
-load_module!(s::String) = load_module(LabModule{Symbol(s)}())
-
-function load_module!(lm::LabModule{:fi})
-
-end
-
-function load_module!(lm::LabModule{:lab0builder})
-    
-end
-
-function load_module!(lm::LabModule{:creator})
-    
-end
-
-
-mutable struct UserConnection <: Toolips.AbstractConnection
-    hostname::String
-    routes::Vector{Toolips.AbstractRoute}
-    extensions::Vector{Toolips.AbstractExtension}
-    user::User
-    function UserConnection(c::Connection, name::String)
-        usr = User(tempudata[name], tempudata["purl"], 
-        tmp_udata["quickstart"], tmpudata["fi"])
-        new(c.hostname, c.routes, c.extensions, usr)
-    end
-end
-
-#==
-UI
-==#
-
 function make_styles()
     stylebody = Component{:sheet}("chisheet")
     txtboxes = Style("div.txtboxes", "border-radius" => 2px, 
@@ -91,17 +32,16 @@ function make_styles()
     bttns:"hover":["border-bottom" => "4px solid #FA9EBC"]
     bttns:"focus":["background-color" => "#FA9EBC"]
     paragraphs = Style("p", "font-size" => 15pt, "color" => "white")
-    maintitle = title("met-title", text = "quickstart | ")
+    maintitle = title("met-title", text = "chifi laboratory")
     push!(stylebody, txtboxes, bttns, paragraphs, maintitle)
     stylebody
 end
 
 function chilogo()
     chiwindow = svg("chi", width = 100percent, height = 210, align = "center")
-    chitxt = Component{:image}("chimin")
-    style!(chitxt, "transition" => 500ms)
-    chitxt[:href] = "/images/chimin.png"
-    chitxt[:x], chitxt[:y] = 1, 1
+                                                               # lol or &chi; &phi;
+    chitxt = Component{:text}("chimin", x = "0", y = "105", text = "&#967;&#966;")
+    style!(chitxt, "transition" => 500ms, "stroke" => "#1e1e1e", "stroke-width" => 2pt, "font-size" => 75pt, "fill" => "white")
     push!(chiwindow, chitxt)
     style!(chiwindow, "margin-top" => 10percent, "opacity" => 0percent, "transform" => "translateY(10%)", 
     "transition" => 2seconds, "margin-left" => 40percent)
@@ -111,9 +51,11 @@ end
 function lines_bg()
     lines = svg("linesbg", width = 8000, height = 1800, align = "center")
     style!(lines, "position" => "absolute", "top" => 0px, "left" => 0px, "pointer-events" => "none", 
-    "z-index" => "-7", "opacity" => 20percent, "transition" => 600seconds)
-    division_amountx::Int64 = round(5000 / 50)
-    division_amounty::Int64 = round(5000 / 50)
+    "z-index" => "-7", "opacity" => 20percent, "transition" => 3000seconds)
+    xnum = 10000
+    ynum = 10000
+    division_amountx::Int64 = round(xnum / 50)
+    division_amounty::Int64 = round(ynum / 50)
     [begin
         l = ToolipsSVG.line("t", x1 = xcoord, y1 = 0, x2 = xcoord, y2 = 5000)
         style!(l, "stroke" => "darkgray", "stroke" => "333333", "stroke-width" => 1px, "transition" => "500ms")
@@ -121,39 +63,9 @@ function lines_bg()
         style!(l2, "stroke" => "darkgray", "stroke" => "333333", "stroke-width" => 1px, "transition" => "500ms")
         push!(lines, l, l2)
     end for (xcoord, ycoord) in zip(
-    range(1, 5000,
-    step = division_amountx), range(1, 5000, step = division_amounty))]
+    range(1, xnum,
+    step = division_amountx), range(1, ynum, step = division_amounty))]
     lines
-end
-
-function build_quickstart(c::Connection)
-    quickstart_main = circle("labcirc", cx = 50, cy = 175, r = 20)
-    style!(quickstart_main, "fill" => "#000000", "transition" => 1700ms, "transform" => "translateX(1500px)")
-    doc = circle("docmodule", cx = 100, cy = 175, r = 20)
-    style!(doc, "fill" => module_color(LabModule{:doc}()), "transition" => 2seconds, "transform" => "translateX(1500px)")
-    [quickstart_main, doc]
-end
-
-function build_quickstart(m::LabModule)
-
-end
-
-function build_quickstart(c::UserConnection)
-
-end
-
-function quickstart_loader()
-    prea = a("loadpre", text = "quickstart | starting Laboratory in ")
-    numberheading = a("qscounter", text = "1")
-    style!(numberheading, "color" => "#79B7CE", "font-size" => 22pt, "font-weight" => "bold", 
-    "transition" => 1seconds)
-    na = a("enda", text = " / 5 ...")
-    style!(prea, "color" => "#222222", "font-size" => 18pt)
-    style!(na, "color" => "#222222", "font-size" => 18pt, "font-weight" => "bold")
-    qsloader = div("qsloader")
-    style!(qsloader, "opacity" => 0percent, "transition" => 3seconds)
-    push!(qsloader, prea, numberheading, na)
-    qsloader
 end
 
 theme_colors = ["#79B7CE", "#FE86C7", "#C178B5", "#F9C800", "#E24E40"]
@@ -170,7 +82,7 @@ function ql_load!(f::Function, c::Toolips.AbstractConnection, cm::ComponentModif
     set_text!(cm, "met-title", "quickstart | $(6 - n)")
     set_text!(cm, "qscounter", string(n))
     style!(cm, "qscounter", "color" => theme_colors[n])
-    next!(c, ql[:children]["qscounter"], cm) do cm2::ComponentModifier
+    next!(c, cm, ql[:children]["qscounter"]) do cm2::ComponentModifier
         ql_load!(f, c, cm2, ql, n)
     end
 end
@@ -194,31 +106,18 @@ function lab_in(c::Connection, cm::ComponentModifier, labcirc::Component{:circle
         "stroke-width" => 0px, "stroke" => "lightblue", "transition" => 2seconds, 
         "z-index" => "20", 
         "stroke-dasharray" => 251px, "stroke-dashoffset" => "$(arc)px")
-    next!(c, labcirc, cm) do cm::ComponentModifier
+    next!(c, cm, labcirc) do cm::ComponentModifier
         style!(cm, lab_text, "opacity" => 100percent)
         style!(cm, doccirc, "opacity" => 100percent, 
         "transition" => 1seconds)
         labspin(c, cm, doccirc)
         log = login_wind(c, cm)
         append!(cm, "chimain", log)
-        next!(c, lab_text, cm) do cm2::ComponentModifier
+        next!(c, cm, lab_text) do cm2::ComponentModifier
             style!(cm2, "login-window", "height" => 45percent, "opacity" => 93percent)
             focus!(cm2, "loginbox")
         end
     end
-end
-
-function main_spawn(c::UserConnection, cm::ComponentModifier, 
-    labm::Component{:circle}, doc::Component{:circle})
-
-end
-
-function load_from_name(c::Connection, cm::ComponentModifier, name::String)
-
-end
-
-function load_from_key(c::Connection, cm::ComponentModifier, key::String)
-
 end
 
 standard_txtbind!(c::Toolips.AbstractConnection, cm::ComponentModifier, comp::Component{<:Any}, 
@@ -297,7 +196,7 @@ function labspin(c::Connection, cm::ComponentModifier, docc::Component{:circle})
     style!(cm, docc, "transform" => "rotate($(rot)deg)", "stroke" => color, 
     "stroke-dashoffset" => "$(arc)px", "stroke-dasharray" => "$(darray)px", 
     "stroke-width" => "$(strk)px")
-    next!(c, docc, cm) do cm::ComponentModifier
+    next!(c, cm, docc) do cm::ComponentModifier
         labspin(c, cm, docc)
     end
 end
@@ -307,46 +206,17 @@ function quickstart_splash(c::Connection)
     style!(mainbody, "opacity" => 0percent, "overflow" => "hidden", 
     "transition" => 1500ms)
     splash_chitext::Component{:svg} = chilogo()
-    quicklaunch = build_quickstart(c)
-    splash_chitext[:children] = vcat(splash_chitext[:children], quicklaunch)
     linesb = lines_bg()
     push!(mainbody, linesb, splash_chitext, br(), chi_footer())
     on(c, mainbody, "load") do cm::ComponentModifier
         style!(cm, "chimain", "opacity" => 100percent)
         style!(cm, splash_chitext, "opacity" => 100percent, "transform" => "translateY(0%)")
-        ql = quickstart_loader()
-        append!(cm, "chimain", ql)
         next!(c, cm, splash_chitext) do cm1::ComponentModifier
-            style!(cm1, "linesbg", "transform" => "translateX(-8000px)")
-            style!(cm1, "qsloader", "opacity" => 100percent)
-            [style!(cm1, launch, "transform" => "translateX(0%)") for launch in quicklaunch]
-            responded = false
-            next!(c, cm1, ql) do cm2::ComponentModifier
-                if responded
-                    return
-                end
-                ql_load!(c, cm2, ql, 1) do cm::ComponentModifier
-                    style!(cm, "chimain", "background-color" => "#222222")
-                    [begin
-                        cm[comp] = "cx" => "185"
-                        style!(cm, comp, "transition" => 1200ms)
-                        if e > 1
-                            style!(cm, comp, "opacity" => 0percent)
-                        end
-                    end for (e, comp) in enumerate(quicklaunch)]
-                    style!(cm, splash_chitext[:children][1], "opacity" => 0percent, "transform" => "translateY(-4%)")
-                    remove!(cm, "loadpre")
-                    remove!(cm, "enda")
-                    set_text!(cm, "qscounter", "loading laboratory")
-                    next!(c, cm, quicklaunch[1]) do cm2::ComponentModifier
-                        style!(cm2, "qscounter", "opacity" => 0percent)
-                        remove!(cm2, "chimin")
-                        lab_in(c, cm2, quicklaunch[1], quicklaunch[2])
-                    end
-                end
-                responded = true
+            style!(cm1, "linesbg", "transform" => "translateX(-15000px)")
+            next!(c, cm1, "linesbg") do cm::ComponentModifier
+                #TODO timeout easter egg?
             end
-        end
+        end 
     end
     mainbody::Component{:body}
 end
@@ -395,8 +265,6 @@ function home(c::Connection)
         key = args[:key]
     end
     name = c[:Laboratories][args[:key]]
-    uc = UserConnection(c, name)
-    initbody = quickstart_splash(uc)
     initbody = quickstart_splash(c)
 end
 
